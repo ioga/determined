@@ -1482,18 +1482,18 @@ jobs:
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
-      - run-e2e-tests:
-          mark: <<parameters.mark>>
-          master-host: ${MASTER_HOST}
-      - terminate-gke-cluster:
-          cluster-id: ${CLUSTER_ID}
-          region: <<parameters.region>>
-      - slack/status:
-          fail_only: True
-          only_for_branches: master
-          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: <<parameters.slack-mentions>>
-          channel: <<parameters.slack-channel>>
+      #- run-e2e-tests:
+      #    mark: <<parameters.mark>>
+      #    master-host: ${MASTER_HOST}
+      #- terminate-gke-cluster:
+      #    cluster-id: ${CLUSTER_ID}
+      #    region: <<parameters.region>>
+      #- slack/status:
+      #    fail_only: True
+      #    only_for_branches: master
+      #    failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+      #    mentions: <<parameters.slack-mentions>>
+      #    channel: <<parameters.slack-channel>>
 
   test-e2e-gke-cuda-11:
     parameters:
