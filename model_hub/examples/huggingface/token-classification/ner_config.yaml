@@ -21,7 +21,7 @@ searcher:
   name: single
   metric: accuracy_score
   max_length:
-    batches: 100
+    epochs: 3
   smaller_is_better: false
 data:
   dataset_name: conll2003

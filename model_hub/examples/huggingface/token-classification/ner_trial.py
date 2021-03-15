@@ -113,5 +113,6 @@ class NERTrial(hf.BaseTransformerTrial):
         preds = logits.detach().cpu().numpy()
         out_label_ids = batch["labels"].detach().cpu().numpy()
         self.reducer.update(preds, out_label_ids)
-        # We will return just the metrics outputed by the reducer.
+        # Although we are returning the empty dictionary below, we will still get the metrcis from
+        # custom reducer that we passed to the context during initialization.
         return {}

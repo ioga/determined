@@ -1,3 +1,13 @@
+"""
+These functions extract parts of the code from the named-entity recognition example
+in huggingface transformers.  The source example code changes rapidly due to frequent refactorings
+but the main structure should be similar.
+See the original example at:
+https://github.com/huggingface/transformers/blob/master/examples/token-classification/run_ner.py
+
+Note this code is separated from ner_trial.py since it is not determined specific code and
+is necessary even if implementing outside of determined.
+"""
 from typing import Any, Dict, List
 
 import datasets
