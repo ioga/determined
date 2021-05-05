@@ -61,7 +61,7 @@ class cloudformation:
     LOG_GROUP_PREFIX = "LogGroupPrefix"
     RETAIN_LOG_GROUP = "RetainLogGroup"
     IMAGE_REPO_PREFIX = "ImageRepoPrefix"
-
+    USE_GOVCLOUD = "UseGovCloud"
 
 class misc:
     TEMPLATE_PATH = "determined.deploy.aws.templates"

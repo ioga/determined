@@ -19,6 +19,12 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
         "export DET_MASTER={master_url}", "yellow"
     )
     ui_info = "View the Determined UI: " + colored("{master_url}", "blue")
+
+    logs_info_gov = "View Logs at: " + colored(
+        "https://console.amazonaws-us-gov.com/cloudwatch/home?"
+        "region={region}#logsV2:log-groups/log-group/{log_group}",
+        "blue",
+    )
     logs_info = "View Logs at: " + colored(
         "https://{region}.console.aws.amazon.com/cloudwatch/home?"
         "region={region}#logStream:group={log_group}",
@@ -74,10 +80,16 @@ class DeterminedDeployment(metaclass=abc.ABCMeta):
 
     @property
     def info_partials(self) -> Iterable[str]:
+
+        if self.parameters[constants.cloudformation.USE_GOVCLOUD]:
+            logs_info = self.logs_info_gov
+        else:
+            logs_info = self.logs_info
+
         return (
             self.master_info,
             self.ui_info,
-            self.logs_info,
+            logs_info,
             self.ssh_info,
         )
 

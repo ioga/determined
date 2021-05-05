@@ -12,7 +12,7 @@ from determined.common.declarative_argparse import Arg, ArgGroup, Cmd
 from determined.deploy.errors import MasterTimeoutExpired
 
 from . import aws, constants
-from .deployment_types import base, govcloud, secure, simple, vpc
+from .deployment_types import base, secure, simple, vpc
 from .preflight import check_quotas
 
 
@@ -116,7 +116,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
-        constants.deployment_types.GOVCLOUD: govcloud.Govcloud,
     }  # type: Dict[str, Union[Type[base.DeterminedDeployment]]]
 
     if args.deployment_type != constants.deployment_types.SIMPLE:
@@ -127,12 +126,6 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
                 f"deployment-type={args.deployment_type}."
             )
 
-    if args.deployment_type == constants.deployment_types.GOVCLOUD:
-        if args.region not in ["us-gov-east-1", "us-gov-west-1"]:
-            raise ValueError(
-                "When deploying to GovCloud, set the region to either us-gov-east-1 "
-                "or us-gov-west-1."
-            )
 
     master_tls_cert = master_tls_key = ""
     if args.master_tls_cert:
@@ -141,6 +134,12 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
     if args.master_tls_key:
         with open(args.master_tls_key, "rb") as f:
             master_tls_key = base64.b64encode(f.read()).decode()
+
+    # Determine if region is in GovCloud
+    use_govcloud = "false"
+    if args.region:
+        if args.region.find('gov') != -1:
+            use_govcloud = "true"
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
@@ -171,6 +170,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
         constants.cloudformation.LOG_GROUP_PREFIX: args.log_group_prefix,
         constants.cloudformation.RETAIN_LOG_GROUP: args.retain_log_group,
         constants.cloudformation.IMAGE_REPO_PREFIX: args.image_repo_prefix,
+        constants.cloudformation.USE_GOVCLOUD: use_govcloud,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
