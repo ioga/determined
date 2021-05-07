@@ -94,7 +94,7 @@ class SubprocessLauncher:
         # from the main horovod process and sshd processes.
         self._worker_process_ids = []  # type: List[int]
 
-        self.num_gpus = len(self.env.container_gpus)
+        self.num_gpus = max(1, len(self.env.container_gpus))
         self.debug = self.env.experiment_config.debug_enabled()
 
         # Horovod will have a separate training process for each GPU.
@@ -194,7 +194,7 @@ class SubprocessLauncher:
         ]
         logging.debug(
             f"Non-chief [{self.rendezvous_info.get_rank()}] training process launch "
-            "command: {run_sshd_command}."
+            f"command: {run_sshd_command}."
         )
         return subprocess.Popen(run_sshd_command)
 

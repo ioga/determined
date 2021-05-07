@@ -170,6 +170,23 @@ type ec2Tag struct {
 
 type ec2InstanceType string
 
+var ec2InstanceUseGPUs = map[ec2InstanceType]bool{
+	"g4dn.xlarge":   true,
+	"g4dn.2xlarge":  true,
+	"g4dn.4xlarge":  true,
+	"g4dn.8xlarge":  true,
+	"g4dn.16xlarge": true,
+	"g4dn.12xlarge": true,
+	"g4dn.metal":    true,
+	"p2.xlarge":     true,
+	"p2.8xlarge":    true,
+	"p2.16xlarge":   true,
+	"p3.2xlarge":    true,
+	"p3.8xlarge":    true,
+	"p3.16xlarge":   true,
+	"p3dn.24xlarge": true,
+}
+
 func (t ec2InstanceType) name() string {
 	return string(t)
 }
@@ -179,6 +196,13 @@ func (t ec2InstanceType) Slots() int {
 		return s
 	}
 	return 0
+}
+
+func (t ec2InstanceType) useGPUs() bool {
+	if s, ok := ec2InstanceUseGPUs[t]; ok {
+		return s
+	}
+	return false
 }
 
 func (t ec2InstanceType) Validate() []error {

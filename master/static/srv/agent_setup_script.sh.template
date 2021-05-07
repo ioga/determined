@@ -18,7 +18,7 @@ then
     docker_args+=(-e DET_SLOT_TYPE=gpu)
 else
     echo "#### Starting agent with only CPUs"
-    docker_args+=(-e DET_SLOT_TYPE=none)
+    docker_args+=(-e DET_SLOT_TYPE=auto)
 fi
 
 cert_b64={{.MasterCertBase64}}

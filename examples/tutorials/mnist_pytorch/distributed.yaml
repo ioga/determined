@@ -9,7 +9,9 @@ hyperparameters:
   dropout1: 0.25
   dropout2: 0.5
 resources:
-  slots_per_trial: 8
+  resource_pool: cpu-pool
+  slots_per_trial: 2
+max_restarts: 0
 searcher:
   name: single
   metric: validation_loss
@@ -17,3 +19,6 @@ searcher:
       batches: 117  #60,000 training images with batch size 512 (batch size 64 per GPU)
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
+environment:
+  image: determinedilia/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-08130e8
+  #debug: true
