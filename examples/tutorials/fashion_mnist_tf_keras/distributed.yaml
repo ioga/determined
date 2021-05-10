@@ -3,7 +3,8 @@ hyperparameters:
   global_batch_size: 256
   dense1: 128
 resources:
-  slots_per_trial: 8
+  resource_pool: cpu-pool
+  slots_per_trial: 2
 records_per_epoch: 60000
 searcher:
   name: single
@@ -12,3 +13,5 @@ searcher:
   max_length:
     epochs: 5
 entrypoint: model_def:FashionMNISTTrial
+environment:
+  image: determinedilia/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-08130e8
