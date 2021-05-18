@@ -3,7 +3,7 @@ data:
   skip_checkpointing_input: true
 hyperparameters:
   learning_rate: 1e-3
-  global_batch_size: 16
+  global_batch_size: 128
   hidden_layer_1: 2500
   hidden_layer_2: 1000
   hidden_layer_3: 500
@@ -20,4 +20,5 @@ entrypoint: model_def:MNistTrial
 environment:
   image: determinedilia/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-08130e8
 resources:
+  slots_per_trial: 2
   resource_pool: cpu-pool

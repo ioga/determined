@@ -59,6 +59,7 @@ type Config struct {
 	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
 	MinInstances           int               `json:"min_instances"`
 	MaxInstances           int               `json:"max_instances"`
+	CPUOnlySlots		   bool	      		 `json:"cpu_only_slots"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
@@ -72,6 +73,7 @@ func DefaultConfig() *Config {
 		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MinInstances:           0,
 		MaxInstances:           5,
+		CPUOnlySlots: false,
 	}
 }
 
