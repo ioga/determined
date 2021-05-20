@@ -124,7 +124,7 @@ func newAWSCluster(
 			StartupScriptBase64:          startupScriptBase64,
 			ContainerStartupScriptBase64: containerScriptBase64,
 			MasterCertBase64:             masterCertBase64,
-			AgentUseGPUs:                 config.AWS.InstanceType.useGPUs(),
+			AgentUseGPUs:                 config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlots,
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
@@ -148,6 +148,15 @@ func newAWSCluster(
 
 func (c *awsCluster) instanceType() instanceType {
 	return c.InstanceType
+}
+
+func (c *awsCluster) slotsPerInstance() int {
+	slots := c.instanceType().Slots()
+	if slots == 0 && c.AWSClusterConfig.CPUSlots {
+		slots = 1
+	}
+
+	return slots
 }
 
 func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {

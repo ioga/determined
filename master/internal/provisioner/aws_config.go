@@ -38,6 +38,8 @@ type AWSClusterConfig struct {
 	SpotMaxPrice string `json:"spot_max_price"`
 
 	CustomTags []*ec2Tag `json:"custom_tags"`
+
+	CPUSlots bool `json:"cpu_slots"`
 }
 
 var defaultAWSImageID = map[string]string{
@@ -62,6 +64,7 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	},
 	InstanceType: "p3.8xlarge",
 	SpotEnabled:  false,
+	CPUSlots:     false,
 }
 
 func (c *AWSClusterConfig) buildDockerLogString() string {

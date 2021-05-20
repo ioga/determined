@@ -59,7 +59,7 @@ type Config struct {
 	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
 	MinInstances           int               `json:"min_instances"`
 	MaxInstances           int               `json:"max_instances"`
-	CPUOnlySlots		   bool	      		 `json:"cpu_only_slots"`
+	//CPUSlots               bool              `json:"cpu_slots"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
@@ -73,7 +73,7 @@ func DefaultConfig() *Config {
 		MaxAgentStartingPeriod: Duration(20 * time.Minute),
 		MinInstances:           0,
 		MaxInstances:           5,
-		CPUOnlySlots: false,
+		//CPUSlots:               false,
 	}
 }
 
@@ -164,4 +164,21 @@ func (c *Config) initMasterAddress() error {
 	}
 	c.MasterURL = (&url.URL{Scheme: scheme, Host: fmt.Sprintf("%s:%s", host, port)}).String()
 	return nil
+}
+
+func (c Config) SlotsPerAgent() int {
+	accelerator_slots := 0
+	/*
+		if c.AWS != nil {
+			accelerator_slots = c.AWS.InstanceType.Slots()
+		}
+		if c.GCP != nil {
+			accelerator_slots = c.GCP.InstanceType.GPUNum
+		}
+
+		if accelerator_slots == 0 && c.CPUSlots {
+			return 1
+		}
+	*/
+	return accelerator_slots
 }

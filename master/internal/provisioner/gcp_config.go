@@ -42,6 +42,7 @@ type GCPClusterConfig struct {
 	InstanceType gceInstanceType `json:"instance_type"`
 
 	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
+	CPUSlots               bool     `json:"cpu_slots"`
 }
 
 // DefaultGCPClusterConfig returns the default configuration of the gcp cluster.
@@ -56,6 +57,7 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 			GPUNum:      4,
 		},
 		OperationTimeoutPeriod: Duration(5 * time.Minute),
+		CPUSlots:               false,
 	}
 }
 

@@ -76,7 +76,7 @@ func newGCPCluster(
 		MasterHost:                   masterURL.Hostname(),
 		MasterPort:                   masterURL.Port(),
 		MasterCertName:               config.MasterCertName,
-		AgentUseGPUs:                 config.GCP.InstanceType.Slots() > 0,
+		AgentUseGPUs:                 config.GCP.InstanceType.Slots() > 0 || !config.GCP.CPUSlots,
 		AgentNetwork:                 config.AgentDockerNetwork,
 		AgentDockerRuntime:           config.AgentDockerRuntime,
 		AgentDockerImage:             config.AgentDockerImage,
@@ -111,6 +111,15 @@ func newGCPCluster(
 
 func (c *gcpCluster) instanceType() instanceType {
 	return c.InstanceType
+}
+
+func (c *gcpCluster) slotsPerInstance() int {
+	slots := c.instanceType().Slots()
+	if slots == 0 && c.GCPClusterConfig.CPUSlots {
+		slots = 1
+	}
+
+	return slots
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
