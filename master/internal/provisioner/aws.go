@@ -110,7 +110,9 @@ func newAWSCluster(
 	}
 	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
 
-	fmt.Print("new aws cluster pool ", resourcePool, " useGPU: ", config.AWS.InstanceType.useGPUs(), "\n")
+	// TODO XXX
+	agentUseGPUs := config.AWS.InstanceType.Slots() > 0 || !config.AWS.CPUSlots
+	fmt.Print("new aws cluster pool ", resourcePool, " useGPU: ", agentUseGPUs, "\n")
 
 	cluster := &awsCluster{
 		resourcePool:     resourcePool,
