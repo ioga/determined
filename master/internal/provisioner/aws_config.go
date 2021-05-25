@@ -136,6 +136,15 @@ func (c AWSClusterConfig) Validate() []error {
 	}
 }
 
+func (c AWSClusterConfig) SlotsPerAgent() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlots {
+		slots = 1
+	}
+
+	return slots
+}
+
 func validateMaxSpotPrice(spotMaxPriceInput string) error {
 	// Must have 1 or 0 decimalPoints. All other characters must be digits
 	numDecimalPoints := strings.Count(spotMaxPriceInput, ".")

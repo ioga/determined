@@ -197,6 +197,15 @@ func (c *GCPClusterConfig) merge() *compute.Instance {
 	return rb
 }
 
+func (c GCPClusterConfig) SlotsPerAgent() int {
+	slots := c.InstanceType.Slots()
+	if slots == 0 && c.CPUSlots {
+		slots = 1
+	}
+
+	return slots
+}
+
 type gceNetworkInterface struct {
 	Network    string `json:"network"`
 	Subnetwork string `json:"subnetwork"`

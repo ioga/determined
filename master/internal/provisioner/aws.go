@@ -153,12 +153,7 @@ func (c *awsCluster) instanceType() instanceType {
 }
 
 func (c *awsCluster) slotsPerInstance() int {
-	slots := c.instanceType().Slots()
-	if slots == 0 && c.AWSClusterConfig.CPUSlots {
-		slots = 1
-	}
-
-	return slots
+	return c.AWSClusterConfig.SlotsPerAgent()
 }
 
 func (c *awsCluster) agentNameFromInstance(inst *ec2.Instance) string {

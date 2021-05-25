@@ -114,12 +114,7 @@ func (c *gcpCluster) instanceType() instanceType {
 }
 
 func (c *gcpCluster) slotsPerInstance() int {
-	slots := c.instanceType().Slots()
-	if slots == 0 && c.GCPClusterConfig.CPUSlots {
-		slots = 1
-	}
-
-	return slots
+	return c.GCPClusterConfig.SlotsPerAgent()
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
