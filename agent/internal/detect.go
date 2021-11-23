@@ -34,6 +34,14 @@ func (a *agent) detect() error {
 		if err != nil {
 			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
 		}
+
+		if len(devices) == 0 {
+			devices, err = detectRocmGPUs(a.Options.VisibleGPUs)
+			if err != nil {
+				return errors.Wrap(err, "error while gathering GPU info through rocm-smi command")
+			}
+		}
+
 		a.Devices = devices
 	case a.SlotType == "cpu":
 		devices, err := detectCPUs()
@@ -45,6 +53,12 @@ func (a *agent) detect() error {
 		devices, err := detectGPUs(a.Options.VisibleGPUs)
 		if err != nil {
 			return errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
+		}
+		if len(devices) == 0 {
+			devices, err = detectRocmGPUs(a.Options.VisibleGPUs)
+			if err != nil {
+				return errors.Wrap(err, "error while gathering GPU info through rocm-smi command")
+			}
 		}
 		if len(devices) == 0 {
 			devices, err = detectCPUs()

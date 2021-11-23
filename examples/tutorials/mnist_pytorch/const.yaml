@@ -15,3 +15,15 @@ searcher:
       batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
+checkpoint_storage:
+  host_path: /tmp
+  propagation: null
+  save_experiment_best: null
+  save_trial_best: null
+  save_trial_latest: null
+  storage_path: determined-cp
+  type: shared_fs
+resources:
+  resource_pool: rocm-pool
+environment:
+  image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-13ec3fb

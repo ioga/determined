@@ -188,8 +188,23 @@ func overwriteSpec(
 		spec.RunSpec.ContainerConfig.Labels[k] = v
 	}
 
+	/* nvidia
 	spec.RunSpec.HostConfig.DeviceRequests = append(
 		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
+	*/
+	// --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
+	spec.RunSpec.HostConfig.SecurityOpt = append(
+		spec.RunSpec.HostConfig.SecurityOpt, "seccomp=unconfined")
+	spec.RunSpec.HostConfig.GroupAdd = append(spec.RunSpec.HostConfig.GroupAdd, "video")
+	mappedDevices := []string{"/dev/kfd", "/dev/dri"}
+	for _, mappedDevice := range mappedDevices {
+		spec.RunSpec.HostConfig.Devices = append(
+			spec.RunSpec.HostConfig.Devices, dcontainer.DeviceMapping{
+				PathOnHost:        mappedDevice,
+				PathInContainer:   mappedDevice,
+				CgroupPermissions: "rwm",
+			})
+	}
 
 	if spec.RunSpec.UseFluentLogging {
 		spec.RunSpec.HostConfig.LogConfig = dcontainer.LogConfig{
@@ -208,6 +223,7 @@ func overwriteSpec(
 	return spec
 }
 
+/*
 func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 	gpuUUIDs := cont.GPUDeviceUUIDs()
 	if len(gpuUUIDs) == 0 {
@@ -221,6 +237,7 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 		},
 	}
 }
+*/
 
 func containerEnvVars(cont cproto.Container) []string {
 	var slotIds []string
