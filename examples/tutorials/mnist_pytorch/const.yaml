@@ -26,4 +26,4 @@ checkpoint_storage:
 resources:
   resource_pool: rocm-pool
 environment:
-  image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-13ec3fb
+  image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-5742da3

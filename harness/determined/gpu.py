@@ -94,7 +94,7 @@ def _get_rocm_gpus() -> List[GPU]:
         return []
 
     gpus = []
-    for k, v in output:
+    for k, v in output.items():
         gpus.append(GPU(
             id=int(k[len("card"):]),
             uuid=v["Unique ID"],
