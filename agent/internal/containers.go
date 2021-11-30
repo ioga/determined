@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -192,18 +193,9 @@ func overwriteSpec(
 	spec.RunSpec.HostConfig.DeviceRequests = append(
 		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
 	*/
-	// --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
-	spec.RunSpec.HostConfig.SecurityOpt = append(
-		spec.RunSpec.HostConfig.SecurityOpt, "seccomp=unconfined")
-	spec.RunSpec.HostConfig.GroupAdd = append(spec.RunSpec.HostConfig.GroupAdd, "video")
-	mappedDevices := []string{"/dev/kfd", "/dev/dri"}
-	for _, mappedDevice := range mappedDevices {
-		spec.RunSpec.HostConfig.Devices = append(
-			spec.RunSpec.HostConfig.Devices, dcontainer.DeviceMapping{
-				PathOnHost:        mappedDevice,
-				PathInContainer:   mappedDevice,
-				CgroupPermissions: "rwm",
-			})
+	err := injectRocmDeviceRequests(cont, &spec.RunSpec.HostConfig)
+	if err != nil {
+		fmt.Println("UH OH!!!!") // TODO
 	}
 
 	if spec.RunSpec.UseFluentLogging {
@@ -238,6 +230,47 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 	}
 }
 */
+
+func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
+	// --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
+	uuids := cont.GPUDeviceUUIDs() // TODO: rocm?
+	if len(uuids) == 0 {
+		return nil
+	}
+
+	hostConfig.SecurityOpt = append(
+		hostConfig.SecurityOpt, "seccomp=unconfined")
+	hostConfig.GroupAdd = append(hostConfig.GroupAdd, "video")
+	mappedDevices := []string{"/dev/kfd"}
+
+	for _, uuid := range uuids {
+		rocmDevice := getRocmDeviceByUUID(uuid)
+		devPaths := []string{
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-card", rocmDevice.PCIBus),
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-render", rocmDevice.PCIBus),
+		}
+		for _, symlink := range devPaths {
+			resolved, err := filepath.EvalSymlinks(symlink)
+			if err != nil {
+				return err
+			}
+			mappedDevices = append(mappedDevices, resolved)
+		}
+	}
+
+	fmt.Println("mappedDevices:", mappedDevices)
+
+	for _, mappedDevice := range mappedDevices {
+		hostConfig.Devices = append(
+			hostConfig.Devices, dcontainer.DeviceMapping{
+				PathOnHost:        mappedDevice,
+				PathInContainer:   mappedDevice,
+				CgroupPermissions: "rwm",
+			})
+	}
+
+	return nil
+}
 
 func containerEnvVars(cont cproto.Container) []string {
 	var slotIds []string

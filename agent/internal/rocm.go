@@ -2,8 +2,10 @@ package internal
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"io"
 	"os/exec"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -52,23 +54,45 @@ func getRocmVersion() (string, error) {
 	return record[1], nil
 }
 
-/*
-Example output for rocm-smi card detection:
+// RocmDevice herp derp hurr durr.
+type RocmDevice struct {
+	UUID       string `json:"Unique ID"`
+	CardSKU    string `json:"Card SKU"`
+	CardVendor string `json:"Card vendor"`
+	CardModel  string `json:"Card model"`
+	PCIBus     string `json:"PCI Bus"`
+	Index      int
+}
 
-$ rocm-smi  --showid --showuniqueid --showproductname --csv
-device,GPU ID,Unique ID,Card series,Card model,Card vendor,Card SKU
-card0,0x738c,0xa0ef0d3db6f12111,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card1,0x738c,0xa38132cf2362b8c3,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card2,0x738c,0x1a0c44eae3f2753e,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card3,0x738c,0xfe1b937ecaa13ccc,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card4,0x738c,0x11c62d148b1506b1,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card5,0x738c,0x7a85070458971be6,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card6,0x738c,0xeb6bad8d73890a57,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34314
-card7,0x738c,0x9bcde85fbd3d889b,0x738c,0x0c34,Advanced Micro Devices Inc. [AMD/ATI],D34303
-*/
+// Cache discovered devices for runtime lookups.
+var discoveredRocmDevices []RocmDevice
+
+func parseRocmSmi(jsonData []byte) ([]RocmDevice, error) {
+	parsed := map[string]RocmDevice{}
+	err := json.Unmarshal(jsonData, &parsed)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []RocmDevice{}
+
+	for k, d := range parsed {
+		d.Index, err = strconv.Atoi(k[len("card"):])
+		if err != nil {
+			return nil, errors.Wrap(
+				err, "failed to parse card index")
+		}
+		result = append(result, d)
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Index < result[j].Index
+	})
+	return result, nil
+}
 
 func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
-	args := []string{"--showid", "--showuniqueid", "--showproductname", "--csv"}
+	args := []string{"--showuniqueid", "--showproductname", "--showbus", "--json"}
 
 	if visibleGPUs != "" {
 		gpuIds := strings.Split(visibleGPUs, ",")
@@ -77,6 +101,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 	}
 
 	cmd := exec.Command("rocm-smi", args...)
+
 	out, err := cmd.Output()
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
 		return nil, nil
@@ -86,42 +111,34 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 		return nil, nil
 	}
 
-	devices := []device.Device{}
-	reader := csv.NewReader(strings.NewReader(string(out)))
-
-	header, err := reader.Read()
+	discoveredRocmDevices, err = parseRocmSmi(out)
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing output of rocm-smi")
+		log.WithError(err).WithField("output", string(out)).Warnf(
+			"error while parsing rocm-smi output")
+		return nil, nil
 	}
 
-	expectedHeaders := []string{
-		"device", "GPU ID", "Unique ID", "Card series",
-		"Card model", "Card vendor", "Card SKU",
+	result := []device.Device{}
+
+	for _, rocmDevice := range discoveredRocmDevices {
+		result = append(result, device.Device{
+			ID:    rocmDevice.Index,
+			Brand: rocmDevice.CardVendor,
+			UUID:  rocmDevice.UUID,
+			Type:  device.GPU,
+		})
 	}
-	for i, h := range expectedHeaders {
-		if header[i] != h {
-			return nil, errors.New("bad rocm-smi csv header")
+
+	return result, nil
+}
+
+func getRocmDeviceByUUID(uuid string) *RocmDevice {
+	for _, d := range discoveredRocmDevices {
+		if d.UUID == uuid {
+			result := d
+			return &result
 		}
 	}
 
-	for {
-		record, err := reader.Read()
-		switch {
-		case err == io.EOF:
-			return devices, nil
-		case err != nil:
-			return nil, errors.Wrap(err, "error parsing output of rocm-smi")
-		}
-
-		index, err := strconv.Atoi(record[0][len("card"):])
-		if err != nil {
-			return nil, errors.Wrap(
-				err, "error parsing output of nvidia-smi; index of GPU cannot be converted to int")
-		}
-
-		brand := strings.TrimSpace(record[5])
-		uuid := strings.TrimSpace(record[2])
-
-		devices = append(devices, device.Device{ID: index, Brand: brand, UUID: uuid, Type: device.GPU})
-	}
+	return nil
 }
