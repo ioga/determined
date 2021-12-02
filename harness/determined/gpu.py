@@ -90,7 +90,7 @@ def _get_rocm_gpus() -> List[GPU]:
     try:
         output = json.loads(output_json)
     except Exception as e:
-        logging.warning(f"failed to parse rocm-smi json output: {e}")
+        logging.warning(f"failed to parse rocm-smi json output: {e}, content: {str(output_json)}")
         return []
 
     gpus = []
