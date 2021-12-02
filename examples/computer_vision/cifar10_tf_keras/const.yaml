@@ -20,3 +20,7 @@ searcher:
 min_validation_period:
   epochs: 1
 entrypoint: model_def:CIFARTrial
+environment:
+  image: determinedilia/environments:rocm-4.2-tf-2.5-rocm-99d42e0
+resources:
+  resource_pool: rocm-pool

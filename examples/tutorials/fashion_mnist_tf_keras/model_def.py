@@ -11,9 +11,13 @@ the number of epochs to increase accuracy.
 import tensorflow as tf
 from tensorflow import keras
 
-from determined.keras import TFKerasTrial, TFKerasTrialContext, InputData
+from determined.keras import TFKerasTrial, TFKerasTrialContext, InputData, callbacks
 
 import data
+
+class MyCallback(callbacks.Callback):
+    def on_train_batch_end(self, batch, logs):
+        print('logs size:', logs)
 
 
 class FashionMNISTTrial(TFKerasTrial):
@@ -54,3 +58,8 @@ class FashionMNISTTrial(TFKerasTrial):
         test_images = test_images / 255.0
 
         return test_images, test_labels
+
+    def keras_callbacks(self):
+        return [
+            MyCallback(),
+        ]
