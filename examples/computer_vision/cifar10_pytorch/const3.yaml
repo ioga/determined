@@ -17,7 +17,4 @@ min_validation_period:
   epochs: 1
 resources:
   resource_pool: rocm-pool
-  slots_per_trial: 8
-environment:
-  #image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-5742da3
-  image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-62c0f21
+  slots_per_trial: 2

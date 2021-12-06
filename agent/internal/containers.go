@@ -122,7 +122,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
-		msg.Spec = c.overwriteSpec(msg.Container, msg.Spec)
+		msg.Spec = c.overwriteSpec(ctx, msg.Container, msg.Spec)
 		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
@@ -162,11 +162,12 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 	}
 }
 
-func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) cproto.Spec {
-	return overwriteSpec(cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
+func (c *containerManager) overwriteSpec(ctx *actor.Context, cont cproto.Container, spec cproto.Spec) cproto.Spec {
+	return overwriteSpec(ctx, cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
 }
 
 func overwriteSpec(
+	ctx *actor.Context,
 	cont cproto.Container,
 	spec cproto.Spec,
 	globalEnvVars []string,
@@ -193,9 +194,9 @@ func overwriteSpec(
 	spec.RunSpec.HostConfig.DeviceRequests = append(
 		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
 	*/
-	err := injectRocmDeviceRequests(cont, &spec.RunSpec.HostConfig)
+	err := injectRocmDeviceRequests(ctx, cont, &spec.RunSpec.HostConfig)
 	if err != nil {
-		fmt.Println("UH OH!!!!") // TODO
+		ctx.Log().Warn("UH OH!!!!", err)
 	}
 
 	if spec.RunSpec.UseFluentLogging {
@@ -231,10 +232,11 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 }
 */
 
-func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
+func injectRocmDeviceRequests(ctx *actor.Context, cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
 	// --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
 	uuids := cont.GPUDeviceUUIDs() // TODO: rocm?
 	if len(uuids) == 0 {
+		ctx.Log().Warn("No gpu uuids")
 		return nil
 	}
 
@@ -246,8 +248,8 @@ func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.Host
 	for _, uuid := range uuids {
 		rocmDevice := getRocmDeviceByUUID(uuid)
 		devPaths := []string{
-			fmt.Sprintf("/dev/dri/by-path/pci-%s-card", rocmDevice.PCIBus),
-			fmt.Sprintf("/dev/dri/by-path/pci-%s-render", rocmDevice.PCIBus),
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-card", strings.ToLower(rocmDevice.PCIBus)),
+			fmt.Sprintf("/dev/dri/by-path/pci-%s-render", strings.ToLower(rocmDevice.PCIBus)),
 		}
 		for _, symlink := range devPaths {
 			resolved, err := filepath.EvalSymlinks(symlink)

@@ -21,7 +21,9 @@ min_validation_period:
   epochs: 1
 entrypoint: model_def:CIFARTrial
 environment:
-  image: determinedilia/environments:rocm-4.2-tf-2.5-rocm-99d42e0
+  image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-e9238da
+    #image: determinedilia/environments:rocm-4.2-pytorch-1.9-rocm-9042d69
+    #image: determinedilia/environments:rocm-4.2-tf-2.5-rocm-0023787
 resources:
   resource_pool: rocm-pool
   slots_per_trial: 4
