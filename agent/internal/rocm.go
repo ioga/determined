@@ -125,7 +125,7 @@ func detectRocmGPUs(visibleGPUs string) ([]device.Device, error) {
 			ID:    rocmDevice.Index,
 			Brand: rocmDevice.CardVendor,
 			UUID:  rocmDevice.UUID,
-			Type:  device.GPU,
+			Type:  device.ROCM,
 		})
 	}
 

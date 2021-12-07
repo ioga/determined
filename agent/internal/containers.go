@@ -122,7 +122,17 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		ctx.Tell(ctx.Self().Parent(), msg)
 
 	case aproto.StartContainer:
-		msg.Spec = c.overwriteSpec(ctx, msg.Container, msg.Spec)
+		enrichedSpec, err := c.overwriteSpec(msg.Container, msg.Spec)
+		if err != nil {
+			ctx.Log().WithError(err).Errorf("failed to overwrite spec")
+			if ctx.ExpectingResponse() {
+				ctx.Respond(errors.Wrap(err, "failed to overwrite spec"))
+			}
+			return nil
+		}
+		// actually overwrite the spec.
+		msg.Spec = enrichedSpec
+
 		if ref, ok := ctx.ActorOf(msg.Container.ID, newContainerActor(msg, c.docker)); !ok {
 			ctx.Log().Warnf("container already created: %s", msg.Container.ID)
 			if ctx.ExpectingResponse() {
@@ -162,18 +172,18 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 	}
 }
 
-func (c *containerManager) overwriteSpec(ctx *actor.Context, cont cproto.Container, spec cproto.Spec) cproto.Spec {
-	return overwriteSpec(ctx, cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
+func (c *containerManager) overwriteSpec(cont cproto.Container, spec cproto.Spec) (
+	cproto.Spec, error) {
+	return overwriteSpec(cont, spec, c.GlobalEnvVars, c.Labels, c.fluentPort)
 }
 
 func overwriteSpec(
-	ctx *actor.Context,
 	cont cproto.Container,
 	spec cproto.Spec,
 	globalEnvVars []string,
 	labels map[string]string,
 	fluentPort int,
-) cproto.Spec {
+) (cproto.Spec, error) {
 	//spec.RunSpec.HostConfig.AutoRemove = true
 	spec.RunSpec.ContainerConfig.Env = append(
 		spec.RunSpec.ContainerConfig.Env, globalEnvVars...)
@@ -190,13 +200,15 @@ func overwriteSpec(
 		spec.RunSpec.ContainerConfig.Labels[k] = v
 	}
 
-	/* nvidia
-	spec.RunSpec.HostConfig.DeviceRequests = append(
-		spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
-	*/
-	err := injectRocmDeviceRequests(ctx, cont, &spec.RunSpec.HostConfig)
-	if err != nil {
-		ctx.Log().Warn("UH OH!!!!", err)
+	if len(cont.DeviceUUIDsByType(device.GPU)) > 0 {
+		spec.RunSpec.HostConfig.DeviceRequests = append(
+			spec.RunSpec.HostConfig.DeviceRequests, gpuDeviceRequests(cont)...)
+	}
+
+	if len(cont.DeviceUUIDsByType(device.ROCM)) > 0 {
+		if err := injectRocmDeviceRequests(cont, &spec.RunSpec.HostConfig); err != nil {
+			return cproto.Spec{}, err
+		}
 	}
 
 	if spec.RunSpec.UseFluentLogging {
@@ -213,10 +225,9 @@ func overwriteSpec(
 		}
 	}
 
-	return spec
+	return spec, nil
 }
 
-/*
 func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 	gpuUUIDs := cont.GPUDeviceUUIDs()
 	if len(gpuUUIDs) == 0 {
@@ -230,14 +241,12 @@ func gpuDeviceRequests(cont cproto.Container) []dcontainer.DeviceRequest {
 		},
 	}
 }
-*/
 
-func injectRocmDeviceRequests(ctx *actor.Context, cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
-	// --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video
-	uuids := cont.GPUDeviceUUIDs() // TODO: rocm?
+func injectRocmDeviceRequests(cont cproto.Container, hostConfig *dcontainer.HostConfig) error {
+	uuids := cont.DeviceUUIDsByType(device.ROCM)
+
 	if len(uuids) == 0 {
-		ctx.Log().Warn("No gpu uuids")
-		return nil
+		return errors.New("no rocm device uuids")
 	}
 
 	hostConfig.SecurityOpt = append(
@@ -259,8 +268,6 @@ func injectRocmDeviceRequests(ctx *actor.Context, cont cproto.Container, hostCon
 			mappedDevices = append(mappedDevices, resolved)
 		}
 	}
-
-	fmt.Println("mappedDevices:", mappedDevices)
 
 	for _, mappedDevice := range mappedDevices {
 		hostConfig.Devices = append(

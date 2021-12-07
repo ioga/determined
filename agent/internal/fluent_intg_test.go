@@ -148,7 +148,7 @@ func makeLogTestCase(trialID int, agentID string) ([]model.TrialLog, string) {
 			StdType:     stringToPointer("stdout"),
 		},
 	}
-	actual := `[rank=4] 
+	actual := `[rank=4]
 [rank=1] INFO: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 0:00:01.496132)
 [rank=2] ERROR: Workload completed: <RUN_STEP (100 Batches): (580,6289,4)> (duration 9:99:99)
 [rank=3] urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7f29a414dd30>: Failed to establish a new connection: [Errno 110]` // nolint:lll
@@ -214,7 +214,8 @@ func runContainerWithLogs(t *testing.T, fakeLogs string, trialID, fluentPort int
 	}
 	env := []string{fmt.Sprintf("DET_TRIAL_ID=%d", trialID)}
 	cont := cproto.Container{ID: "goodcontainer"}
-	spec = overwriteSpec(cont, spec, env, nil, fluentPort)
+	spec, err = overwriteSpec(cont, spec, env, nil, fluentPort)
+	assert.NilError(t, err, "failed to overwrite spec")
 
 	// AND create a container with this env
 	cc, err := docker.ContainerCreate(

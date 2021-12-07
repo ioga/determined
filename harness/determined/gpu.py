@@ -1,7 +1,7 @@
 import csv
+import json
 import logging
 import subprocess
-import json
 from typing import List, NamedTuple
 
 gpu_fields = [
@@ -76,9 +76,18 @@ def _get_nvidia_gpus() -> List[GPU]:
 
 def _get_rocm_gpus() -> List[GPU]:
     try:
-        output_json = subprocess.run([
-            "rocm-smi", "--showid", "--showuniqueid", "--showproductname", "--json",
-        ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+        output_json = subprocess.run(
+            [
+                "rocm-smi",
+                "--showid",
+                "--showuniqueid",
+                "--showproductname",
+                "--json",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout
 
     except FileNotFoundError:
         logging.info("rocm-smi not found")
@@ -95,12 +104,7 @@ def _get_rocm_gpus() -> List[GPU]:
 
     gpus = []
     for k, v in output.items():
-        gpus.append(GPU(
-            id=int(k[len("card"):]),
-            uuid=v["Unique ID"],
-            load=0,
-            memoryUtil=0
-        ))
+        gpus.append(GPU(id=int(k[len("card") :]), uuid=v["Unique ID"], load=0, memoryUtil=0))
 
     logging.info(f"detected {len(gpus)} rocm gpus")
     return gpus
@@ -111,6 +115,7 @@ def get_gpus() -> List[GPU]:
     if result:
         return result
     return _get_rocm_gpus()
+
 
 def get_gpu_uuids() -> List[str]:
     return [gpu.uuid for gpu in sorted(get_gpus(), key=lambda gpu: gpu.id)]
