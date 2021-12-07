@@ -126,9 +126,12 @@ type EnvironmentVariablesMapV0 struct {
 func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	var plain []string
 	if err := json.Unmarshal(data, &plain); err == nil {
-		copy(e.RawCPU, plain)
-		copy(e.RawGPU, plain)
-		copy(e.RawROCM, plain)
+		e.RawCPU = []string{}
+		e.RawGPU = []string{}
+		e.RawROCM = []string{}
+		e.RawCPU = append(e.RawCPU, plain...)
+		e.RawGPU = append(e.RawGPU, plain...)
+		e.RawROCM = append(e.RawROCM, plain...)
 		return nil
 	}
 	type DefaultParser EnvironmentVariablesMapV0
@@ -140,13 +143,13 @@ func (e *EnvironmentVariablesMapV0) UnmarshalJSON(data []byte) error {
 	e.RawGPU = []string{}
 	e.RawROCM = []string{}
 	if jsonItems.RawCPU != nil {
-		copy(e.RawCPU, jsonItems.RawCPU)
+		e.RawCPU = append(e.RawCPU, jsonItems.RawCPU...)
 	}
 	if jsonItems.RawGPU != nil {
-		copy(e.RawGPU, jsonItems.RawGPU)
+		e.RawGPU = append(e.RawGPU, jsonItems.RawGPU...)
 	}
 	if jsonItems.RawROCM != nil {
-		copy(e.RawROCM, jsonItems.RawROCM)
+		e.RawROCM = append(e.RawROCM, jsonItems.RawROCM...)
 	}
 	return nil
 }
