@@ -111,6 +111,7 @@ require (
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/client9/misspell v0.3.4 // indirect
+	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/denis-tingajkin/go-header v0.3.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
