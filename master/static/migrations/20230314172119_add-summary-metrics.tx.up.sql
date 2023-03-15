@@ -1,3 +1,6 @@
+ALTER TABLE trials
+	ADD COLUMN summary_metrics jsonb DEFAULT NULL;
+
 WITH training_trial_metrics as (
 SELECT
 	name,
