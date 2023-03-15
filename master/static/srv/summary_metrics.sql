@@ -1,3 +1,5 @@
+\timing
+
 WITH training_trial_metrics as (
 SELECT
 	name,
@@ -169,6 +171,5 @@ validation_training_combined_json as (
 	FROM training_trial_metrics_final ttm FULL OUTER JOIN validation_trial_metrics_final vtm
 	ON ttm.trial_id = vtm.trial_id
 )
-UPDATE trials SET summary_metrics = vtcj.summary_metrics
-FROM validation_training_combined_json vtcj WHERE vtcj.trial_id = trials.id
+SELECT * FROM validation_training_combined_json vtcj
 ;
