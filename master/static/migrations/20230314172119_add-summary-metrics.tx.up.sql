@@ -1,3 +1,18 @@
+DO $$
+  DECLARE
+   column_exists boolean;
+BEGIN
+SELECT EXISTS (
+	SELECT 1
+	FROM information_schema.columns
+	WHERE table_name='trials' AND column_name='summary_metrics'
+) INTO column_exists;
+
+IF column_exists THEN
+	RAISE NOTICE 'summary_metrics column already exists, skipping backfill';
+	RETURN;
+END IF;
+
 ALTER TABLE trials
 	ADD COLUMN summary_metrics jsonb DEFAULT NULL;
 
@@ -175,3 +190,4 @@ validation_training_combined_json as (
 UPDATE trials SET summary_metrics = vtcj.summary_metrics
 FROM validation_training_combined_json vtcj WHERE vtcj.trial_id = trials.id
 ;
+END$$;
